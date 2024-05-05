@@ -9,13 +9,17 @@ namespace CoinRepresentation
     /// </summary>
     public class CoinRepresentation
     {
+        /// <summary>
+        /// Dictionary to store memoization values for faster computation.
+        /// </summary>
+        private static Dictionary<string, HashSet<List<long>>> memoization = new Dictionary<string, HashSet<List<long>>>();
 
         /// <summary>
         /// Calculates all unique combinations of coin representations for a given sum.
         /// </summary>
-        /// <param name="coinDenominations">The list of available coin denominations.</param>
-        /// <param name="targetSum">The target sum for which combinations are to be calculated.</param>
-        /// <returns>A list containing all unique combinations of coin representations.</returns>
+        /// <param name="coinDenominations">List of coin denominations.</param>
+        /// <param name="targetSum">Target sum to find combinations for.</param>
+        /// <returns>List of all unique combinations of coin representations.</returns>
         public static List<List<long>> CalculateCombinations(List<long> coinDenominations, long targetSum)
         {
             var combinations = new HashSet<List<long>>(); // Use HashSet for efficient duplicate checking
@@ -24,23 +28,39 @@ namespace CoinRepresentation
         }
 
         /// <summary>
-        /// Recursive method to generate combinations of coin representations.
+        /// Recursive function to generate all unique combinations of coin representations.
         /// </summary>
+        /// <param name="coinDenominations">List of coin denominations.</param>
+        /// <param name="index">Current index in the list of coin denominations.</param>
+        /// <param name="currentCombination">Current combination being formed.</param>
+        /// <param name="remainingSum">Remaining sum to be achieved.</param>
+        /// <param name="combinations">Set to store unique combinations.</param>
         private static void GenerateCombinations(List<long> coinDenominations, int index, List<long> currentCombination, long remainingSum, HashSet<List<long>> combinations)
         {
+            string key = $"{index},{remainingSum},{string.Join(",", currentCombination)}";
+
+            // Checks if the key is already in memo
+            if (memoization.ContainsKey(key))
+            {
+                combinations.UnionWith(memoization[key]);
+                return;
+            }
+
             // Checks if combination found
             if (remainingSum == 0)
             {
                 // Checks if the combination is already in the list
-                if (!combinations.Any(c => c.SequenceEqual(currentCombination)))
+                if (!combinations.Any(lst => lst.SequenceEqual(currentCombination)))
                 {
                     combinations.Add(new List<long>(currentCombination));
                 }
+                memoization[key] = new HashSet<List<long>>(combinations); 
                 return;
             }
 
             if (index >= coinDenominations.Count || remainingSum < 0)
             {
+                memoization[key] = new HashSet<List<long>>(combinations);
                 return;
             }
 
@@ -51,36 +71,29 @@ namespace CoinRepresentation
 
             // Exclude the current coin denomination
             GenerateCombinations(coinDenominations, index + 1, currentCombination, remainingSum, combinations);
+
+            memoization[key] = new HashSet<List<long>>(combinations);
         }
 
         /// <summary>
-        /// Solves the problem of calculating the number of unique combinations for a given sum.
+        /// Solves the problem of finding the number of unique combinations for a given sum.
         /// </summary>
-        /// <param name="sum">The target sum for which unique combinations are to be calculated.</param>
+        /// <param name="targetSum">Target sum to find combinations for.</param>
         /// <returns>The number of unique combinations for the given sum.</returns>
-        public static long Solve(long sum)
+        public static long Solve(long targetSum)
         {
-            List<long> coinDenominations = GenerateCoinDenominations(sum);
-            List<List<long>> combinations = CalculateCombinations(coinDenominations, sum);
+            List<long> powersOfTwo = new List<long>();
+            int closestLog2Index = (int)Math.Floor(Math.Log(targetSum, 2));
 
-            return combinations.Count;
-        }
-
-        /// <summary>
-        /// Generates a list of coin denominations based on the given sum.
-        /// </summary>
-        private static List<long> GenerateCoinDenominations(long sum)
-        {
-            List<long> coinDenominations = new List<long>();
-            int closestLog2Index = (int)Math.Floor(Math.Log(sum, 2));
-
-            // Adds two of each coin with a denomination equal to 2 raised to the power of 'i' for each 'i' from the closest power of 2 to zero.
             for (int i = closestLog2Index; i >= 0; i--)
             {
-                coinDenominations.Add((long)Math.Pow(2, i));
-                coinDenominations.Add((long)Math.Pow(2, i));
+                powersOfTwo.Add((long)Math.Pow(2, i));
+                powersOfTwo.Add((long)Math.Pow(2, i));
             }
-            return coinDenominations;
+
+            List<List<long>> combinations = CalculateCombinations(powersOfTwo, targetSum);
+
+            return combinations.Count;
         }
     }
 }
