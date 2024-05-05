@@ -8,27 +8,39 @@ namespace CoinRepresentation
     public class CoinRepresentation
     {
         /// <summary>
-        /// Solves the coin representation problem for the given value.
+        /// Solves the coin representation problem for a given sum.
         /// </summary>
-        /// <param name="value">The value to represent using coins.</param>
-        /// <returns>The minimum number of coins required to represent the value.</returns>
-        public static int Solve(long value)
+        /// <param name="sum">The target sum to represent using coins.</param>
+        /// <returns>The number of possible ways to represent the sum using coins.</returns>
+        public static long Solve(long sum)
         {
-            int coinCount = 0;
-            long coinValue = 1;
+            // If sum is negative, no coins and no sum possible
+            if (sum < 0) return 0;
 
-            while (value > 0)
+            // If sum is 0, complete combination found
+            if (sum == 0) return 1;
+
+            return CountRepresentationsHelper(sum);
+        }
+
+        /// <summary>
+        /// Helper method to recursively count coin representations.
+        /// </summary>
+        /// <param name="remainingSum">The remaining sum to represent using coins.</param>
+        /// <returns>The number of possible ways to represent the remaining sum using coins.</returns>
+        private static long CountRepresentationsHelper(long remainingSum)
+        {
+            // If remaining sum is even
+            if (remainingSum % 2 == 0)
             {
-                // If the value is greater than or equal to the current power of 2
-                if (value >= coinValue)
-                {
-                    value -= coinValue;
-                    coinCount++;
-                }
-                coinValue <<= 1; // Double the coin value for the next iteration
+                // Recursively solve for half the remaining sum and half the remaining sum minus one
+                return Solve(remainingSum / 2) + Solve(remainingSum / 2 - 1);
             }
-
-            return coinCount;
+            else // If remaining sum is odd
+            {
+                // Recursively solve for half the remaining sum minus one
+                return Solve((remainingSum - 1) / 2);
+            }
         }
     }
 }
